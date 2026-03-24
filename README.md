@@ -277,7 +277,7 @@ This repo now supports a single Railway service from repo root:
 ### Optional data seeding on Railway
 
 - If `SAP_O2C_DATASET_DIR` exists in the runtime environment, startup bootstrap will run `prisma:seed`.
-- If not, app still starts with schema-only DB (empty graph/data).
+- If not, startup hydrates from bundled `prisma/railway-seed.db` so graph/query still work out of the box.
 
 ### Verify after deploy
 
