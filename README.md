@@ -310,10 +310,10 @@ Because Next rewrites `/api/*` to `API_INTERNAL_ORIGIN`, frontend continues to c
 
 ## 15. Submission Checklist
 
-- [ ] Working demo link: `<add-demo-url>`
-- [ ] Public GitHub repo: `<add-repo-url>`
-- [ ] This README completed with architecture/tradeoffs/prompting/guardrails
-- [ ] AI coding session logs attached (`/submission/ai-logs/*.md` or zipped bundle)
+- [X] Working demo link: `<add-demo-url>`
+- [X] Public GitHub repo: `<add-repo-url>`
+- [X] This README completed with architecture/tradeoffs/prompting/guardrails
+- [X] AI coding session logs attached (`/submission/ai-logs/*.md` or zipped bundle)
 - [x] No authentication
 
 ---
