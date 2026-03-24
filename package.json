@@ -2,6 +2,10 @@
   "name": "doge-ai",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0",
+    "npm": ">=10"
+  },
   "scripts": {
     "dev": "next dev",
     "dev:api": "tsx watch backend/src/server.ts",
