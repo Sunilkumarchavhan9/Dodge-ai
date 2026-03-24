@@ -1,5 +1,16 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
+import path from "node:path";
+
+function ensureDatabaseUrl() {
+  if (process.env.DATABASE_URL?.trim()) {
+    return;
+  }
+
+  const sqlitePath = path.resolve(process.cwd(), "prisma", "dev.db").replace(/\\/g, "/");
+  process.env.DATABASE_URL = `file:${sqlitePath}`;
+  console.log(`DATABASE_URL not provided. Falling back to ${process.env.DATABASE_URL}`);
+}
 
 function run(command) {
   execSync(command, {
@@ -14,6 +25,7 @@ function shouldSeedDataset() {
 }
 
 try {
+  ensureDatabaseUrl();
   run("npm run prisma:sync");
 
   if (shouldSeedDataset()) {
