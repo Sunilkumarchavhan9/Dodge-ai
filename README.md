@@ -251,6 +251,11 @@ npm run dev
 App: `http://localhost:3000`  
 API health: `http://localhost:4000/health`
 
+## Demo
+
+- Live App: https://dodge-ai-production.up.railway.app/
+- Walkthrough Video: https://drive.google.com/file/d/1r_jgMHV5fRHhrfRMptWKI75ec7ZW1dLW
+
 ## 11. Deploy (Railway Root, Single Service)
 
 This repo now supports a single Railway service from repo root:
@@ -310,8 +315,9 @@ This repo now supports a single Railway service from repo root:
 
 ## 15. Submission Checklist
 
-- [X] Working demo link: `<add-demo-url>`
-- [X] Public GitHub repo: `<add-repo-url>`
+- [X] Working demo link: `https://dodge-ai-production.up.railway.app/`
+- [X] Walkthrough video: `https://drive.google.com/file/d/1r_jgMHV5fRHhrfRMptWKI75ec7ZW1dLW`
+- [X] Public GitHub repo: `https://github.com/Sunilkumarchavhan9/Dodge-ai`
 - [X] This README completed with architecture/tradeoffs/prompting/guardrails
 - [X] AI coding session logs attached (`/submission/ai-logs/*.md` or zipped bundle)
 - [x] No authentication
