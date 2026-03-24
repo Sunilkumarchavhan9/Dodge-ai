@@ -251,39 +251,39 @@ npm run dev
 App: `http://localhost:3000`  
 API health: `http://localhost:4000/health`
 
-## 11. Deploy
+## 11. Deploy (Railway Root, Single Service)
 
-Recommended split deploy:
+This repo now supports a single Railway service from repo root:
 
-1. Backend (Render/Fly/Railway/etc.) deploy `backend` process:
-   - start command: `npm run start:api`
-   - set same env vars (`DATABASE_URL`, `GEMINI_API_KEY`, etc.)
-2. Frontend (Vercel) deploy Next.js app:
-   - set `API_INTERNAL_ORIGIN=https://<your-backend-domain>`
+- Next.js UI and Express API run in one process (`server.ts`)
+- `/api/*` and `/health` are handled by Express
+- all other routes are handled by Next.js
 
-Because Next rewrites `/api/*` to `API_INTERNAL_ORIGIN`, frontend continues to call `/api/...` transparently.
-
-### Fastest path right now (Vercel + Railway)
+### Railway steps
 
 1. Push this repo to GitHub.
-2. Railway:
-   - Create new project from repo root.
-   - Use `railway.json` (already included) for start/health config.
-   - Set env vars:
-     - `GEMINI_API_KEY`
-     - `LLM_PROVIDER=gemini`
-     - `GEMINI_MODEL=gemini-2.0-flash`
-     - `LLM_SQL_TIMEOUT_MS=20000`
-     - optional: `DATABASE_URL=file:./prisma/dev.db` (default fallback already handles this)
-   - Deploy and copy backend URL (for example `https://<backend>.up.railway.app`).
-3. Vercel:
-   - Import same repo.
-   - Set env var `API_INTERNAL_ORIGIN=https://<backend>.up.railway.app`
-   - Deploy frontend.
-4. Verify:
-   - Frontend loads graph.
-   - `/api/query` from UI returns grounded answers.
-   - Out-of-scope prompts are rejected.
+2. In Railway, create a new project from this repo root.
+3. Railway uses `railway.json`:
+   - start command: `npm run start:railway`
+   - health check: `/health`
+4. Set env vars:
+   - `GEMINI_API_KEY=<your-key>`
+   - `LLM_PROVIDER=gemini`
+   - `GEMINI_MODEL=gemini-2.0-flash`
+   - `LLM_SQL_TIMEOUT_MS=20000`
+5. Keep `API_INTERNAL_ORIGIN` unset/empty for this single-service mode.
+6. Deploy.
+
+### Optional data seeding on Railway
+
+- If `SAP_O2C_DATASET_DIR` exists in the runtime environment, startup bootstrap will run `prisma:seed`.
+- If not, app still starts with schema-only DB (empty graph/data).
+
+### Verify after deploy
+
+1. `GET /health` returns `{ "status": "ok" }`.
+2. Open Railway service URL and confirm UI loads.
+3. Run an in-domain query in sidebar and confirm accepted/rejected responses follow guardrails.
 
 ## 12. Example In-Domain Queries
 
