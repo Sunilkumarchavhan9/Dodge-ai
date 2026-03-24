@@ -4,23 +4,41 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:api": "tsx watch backend/src/server.ts",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "start:api": "tsx backend/src/server.ts",
+    "lint": "eslint",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "node scripts/db-init.mjs",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "db:setup": "npm run prisma:push && npm run prisma:seed"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "framer-motion": "^12.38.0",
     "next": "16.2.1",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
+    "prisma": "^6.19.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

@@ -1,0 +1,492 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model BillingDocumentCancellation {
+  billingDocument            String   @id
+  billingDocumentType        String
+  creationDate               DateTime
+  creationTime               Json
+  lastChangeDateTime         DateTime
+  billingDocumentDate        DateTime
+  billingDocumentIsCancelled Boolean
+  cancelledBillingDocument   String?
+  totalNetAmount             Decimal
+  transactionCurrency        String
+  companyCode                String
+  fiscalYear                 String
+  accountingDocument         String
+  soldToParty                String
+
+  billingDocumentHeader BillingDocumentHeader @relation(fields: [billingDocument], references: [billingDocument])
+  customer              BusinessPartner       @relation("BillingDocumentCancellationSoldToParty", fields: [soldToParty], references: [customer])
+
+  @@index([soldToParty])
+  @@index([companyCode, fiscalYear, accountingDocument])
+  @@map("billing_document_cancellations")
+}
+
+model BillingDocumentHeader {
+  billingDocument            String   @id
+  billingDocumentType        String
+  creationDate               DateTime
+  creationTime               Json
+  lastChangeDateTime         DateTime
+  billingDocumentDate        DateTime
+  billingDocumentIsCancelled Boolean
+  cancelledBillingDocument   String?
+  totalNetAmount             Decimal
+  transactionCurrency        String
+  companyCode                String
+  fiscalYear                 String
+  accountingDocument         String
+  soldToParty                String
+
+  customer BusinessPartner @relation("BillingDocumentHeaderSoldToParty", fields: [soldToParty], references: [customer])
+
+  cancellationSnapshot BillingDocumentCancellation?
+  items                BillingDocumentItem[]
+
+  cancelledDocument   BillingDocumentHeader?  @relation("BillingDocumentCancellationChain", fields: [cancelledBillingDocument], references: [billingDocument])
+  cancellationEntries BillingDocumentHeader[] @relation("BillingDocumentCancellationChain")
+
+  journalEntryItems JournalEntryItemAccountsReceivable[] @relation("JournalReferenceBillingDocument")
+
+  @@unique([companyCode, fiscalYear, accountingDocument])
+  @@index([soldToParty, billingDocumentDate])
+  @@index([cancelledBillingDocument])
+  @@map("billing_document_headers")
+}
+
+model BillingDocumentItem {
+  billingDocument         String
+  billingDocumentItem     String
+  material                String
+  billingQuantity         Decimal
+  billingQuantityUnit     String
+  netAmount               Decimal
+  transactionCurrency     String
+  referenceSdDocument     String
+  referenceSdDocumentItem String
+
+  billingDocumentHeader BillingDocumentHeader @relation(fields: [billingDocument], references: [billingDocument])
+  product               Product               @relation(fields: [material], references: [product])
+  outboundDeliveryItem  OutboundDeliveryItem? @relation("BillingItemToOutboundItem", fields: [referenceSdDocument, referenceSdDocumentItem], references: [deliveryDocument, deliveryDocumentItem])
+
+  @@id([billingDocument, billingDocumentItem])
+  @@index([material])
+  @@index([referenceSdDocument, referenceSdDocumentItem])
+  @@map("billing_document_items")
+}
+
+model BusinessPartner {
+  businessPartner          String   @id
+  customer                 String   @unique
+  businessPartnerCategory  String
+  businessPartnerFullName  String
+  businessPartnerGrouping  String
+  businessPartnerName      String
+  correspondenceLanguage   String?
+  createdByUser            String
+  creationDate             DateTime
+  creationTime             Json
+  firstName                String?
+  formOfAddress            String?
+  industry                 String?
+  lastChangeDate           DateTime
+  lastName                 String?
+  organizationBpName1      String?
+  organizationBpName2      String?
+  businessPartnerIsBlocked Boolean
+  isMarkedForArchiving     Boolean
+
+  addresses            BusinessPartnerAddress[]
+  companyAssignments   CustomerCompanyAssignment[]
+  salesAreaAssignments CustomerSalesAreaAssignment[]
+
+  salesOrderHeaders      SalesOrderHeader[]                   @relation("SalesOrderHeaderSoldToParty")
+  billingDocumentHeaders BillingDocumentHeader[]              @relation("BillingDocumentHeaderSoldToParty")
+  billingCancellations   BillingDocumentCancellation[]        @relation("BillingDocumentCancellationSoldToParty")
+  journalEntryItems      JournalEntryItemAccountsReceivable[]
+  paymentItems           PaymentAccountsReceivable[]
+
+  @@index([businessPartnerName])
+  @@map("business_partners")
+}
+
+model BusinessPartnerAddress {
+  businessPartner        String
+  addressId              String
+  validityStartDate      DateTime
+  validityEndDate        DateTime
+  addressUuid            String
+  addressTimeZone        String
+  cityName               String?
+  country                String
+  poBox                  String?
+  poBoxDeviatingCityName String?
+  poBoxDeviatingCountry  String?
+  poBoxDeviatingRegion   String?
+  poBoxIsWithoutNumber   Boolean
+  poBoxLobbyName         String?
+  poBoxPostalCode        String?
+  postalCode             String?
+  region                 String
+  streetName             String?
+  taxJurisdiction        String?
+  transportZone          String?
+
+  partner BusinessPartner @relation(fields: [businessPartner], references: [businessPartner])
+
+  @@id([businessPartner, addressId])
+  @@index([postalCode, country, region])
+  @@map("business_partner_addresses")
+}
+
+model CustomerCompanyAssignment {
+  customer                       String
+  companyCode                    String
+  accountingClerk                String?
+  accountingClerkFaxNumber       String?
+  accountingClerkInternetAddress String?
+  accountingClerkPhoneNumber     String?
+  alternativePayerAccount        String?
+  paymentBlockingReason          String?
+  paymentMethodsList             String?
+  paymentTerms                   String?
+  reconciliationAccount          String?
+  deletionIndicator              Boolean
+  customerAccountGroup           String
+
+  businessPartner BusinessPartner @relation(fields: [customer], references: [customer])
+
+  @@id([customer, companyCode])
+  @@index([companyCode])
+  @@map("customer_company_assignments")
+}
+
+model CustomerSalesAreaAssignment {
+  customer                    String
+  salesOrganization           String
+  distributionChannel         String
+  division                    String
+  billingIsBlockedForCustomer String?
+  completeDeliveryIsDefined   Boolean
+  creditControlArea           String?
+  currency                    String
+  customerPaymentTerms        String?
+  deliveryPriority            String?
+  incotermsClassification     String?
+  incotermsLocation1          String?
+  salesGroup                  String?
+  salesOffice                 String?
+  shippingCondition           String?
+  slsUnlmtdOvrdelivIsAllwd    Boolean
+  supplyingPlant              String?
+  salesDistrict               String?
+  exchangeRateType            String?
+
+  businessPartner BusinessPartner @relation(fields: [customer], references: [customer])
+
+  @@id([customer, salesOrganization, distributionChannel, division])
+  @@index([salesOrganization, distributionChannel, division])
+  @@map("customer_sales_area_assignments")
+}
+
+model JournalEntryItemAccountsReceivable {
+  companyCode                 String
+  fiscalYear                  String
+  accountingDocument          String
+  accountingDocumentItem      String
+  glAccount                   String
+  referenceDocument           String?
+  costCenter                  String?
+  profitCenter                String?
+  transactionCurrency         String
+  amountInTransactionCurrency Decimal
+  companyCodeCurrency         String
+  amountInCompanyCodeCurrency Decimal
+  postingDate                 DateTime
+  documentDate                DateTime
+  accountingDocumentType      String
+  assignmentReference         String?
+  lastChangeDateTime          DateTime
+  customer                    String
+  financialAccountType        String
+  clearingDate                DateTime?
+  clearingAccountingDocument  String?
+  clearingDocFiscalYear       String?
+
+  businessPartner BusinessPartner        @relation(fields: [customer], references: [customer])
+  billingDocument BillingDocumentHeader? @relation("JournalReferenceBillingDocument", fields: [referenceDocument], references: [billingDocument])
+
+  @@id([companyCode, fiscalYear, accountingDocument, accountingDocumentItem])
+  @@index([customer, postingDate])
+  @@index([referenceDocument])
+  @@index([clearingAccountingDocument, clearingDocFiscalYear])
+  @@map("journal_entry_items_accounts_receivable")
+}
+
+model OutboundDeliveryHeader {
+  deliveryDocument             String    @id
+  actualGoodsMovementDate      DateTime?
+  actualGoodsMovementTime      Json
+  creationDate                 DateTime
+  creationTime                 Json
+  deliveryBlockReason          String?
+  hdrGeneralIncompletionStatus String?
+  headerBillingBlockReason     String?
+  lastChangeDate               DateTime?
+  overallGoodsMovementStatus   String?
+  overallPickingStatus         String?
+  overallProofOfDeliveryStatus String?
+  shippingPoint                String?
+
+  items OutboundDeliveryItem[]
+
+  @@index([creationDate])
+  @@map("outbound_delivery_headers")
+}
+
+model OutboundDeliveryItem {
+  deliveryDocument        String
+  deliveryDocumentItem    String
+  actualDeliveryQuantity  Decimal
+  batch                   String?
+  deliveryQuantityUnit    String
+  itemBillingBlockReason  String?
+  lastChangeDate          DateTime?
+  plant                   String
+  referenceSdDocument     String
+  referenceSdDocumentItem String
+  storageLocation         String
+
+  outboundDeliveryHeader OutboundDeliveryHeader @relation(fields: [deliveryDocument], references: [deliveryDocument])
+  plantRef               Plant                  @relation(fields: [plant], references: [plant])
+  salesOrderItem         SalesOrderItem?        @relation("OutboundItemToSalesItem", fields: [referenceSdDocument, referenceSdDocumentItem], references: [salesOrder, salesOrderItem])
+  billingDocumentItems   BillingDocumentItem[]  @relation("BillingItemToOutboundItem")
+
+  @@id([deliveryDocument, deliveryDocumentItem])
+  @@index([plant, storageLocation])
+  @@index([referenceSdDocument, referenceSdDocumentItem])
+  @@map("outbound_delivery_items")
+}
+
+model PaymentAccountsReceivable {
+  companyCode                 String
+  fiscalYear                  String
+  accountingDocument          String
+  accountingDocumentItem      String
+  clearingDate                DateTime?
+  clearingAccountingDocument  String?
+  clearingDocFiscalYear       String?
+  amountInTransactionCurrency Decimal
+  transactionCurrency         String
+  amountInCompanyCodeCurrency Decimal
+  companyCodeCurrency         String
+  customer                    String
+  invoiceReference            String?
+  invoiceReferenceFiscalYear  String?
+  salesDocument               String?
+  salesDocumentItem           String?
+  postingDate                 DateTime
+  documentDate                DateTime
+  assignmentReference         String?
+  glAccount                   String
+  financialAccountType        String
+  profitCenter                String?
+  costCenter                  String?
+
+  businessPartner BusinessPartner @relation(fields: [customer], references: [customer])
+
+  @@id([companyCode, fiscalYear, accountingDocument, accountingDocumentItem])
+  @@index([customer, postingDate])
+  @@index([clearingAccountingDocument, clearingDocFiscalYear])
+  @@index([invoiceReference])
+  @@map("payments_accounts_receivable")
+}
+
+model Plant {
+  plant                         String  @id
+  plantName                     String
+  valuationArea                 String
+  plantCustomer                 String
+  plantSupplier                 String?
+  factoryCalendar               String
+  defaultPurchasingOrganization String?
+  salesOrganization             String
+  addressId                     String
+  plantCategory                 String?
+  distributionChannel           String?
+  division                      String?
+  language                      String?
+  isMarkedForArchiving          Boolean
+
+  productPlants           ProductPlant[]
+  productStorageLocations ProductStorageLocation[]
+  salesOrderItems         SalesOrderItem[]
+  outboundDeliveryItems   OutboundDeliveryItem[]
+
+  @@index([plantName])
+  @@map("plants")
+}
+
+model Product {
+  product                      String    @id
+  productType                  String
+  crossPlantStatus             String?
+  crossPlantStatusValidityDate DateTime?
+  creationDate                 DateTime
+  createdByUser                String
+  lastChangeDate               DateTime
+  lastChangeDateTime           DateTime
+  isMarkedForDeletion          Boolean
+  productOldId                 String?
+  grossWeight                  Decimal
+  weightUnit                   String
+  netWeight                    Decimal
+  productGroup                 String
+  baseUnit                     String
+  division                     String
+  industrySector               String
+
+  descriptions         ProductDescription[]
+  productPlants        ProductPlant[]
+  storageLocations     ProductStorageLocation[]
+  salesOrderItems      SalesOrderItem[]
+  billingDocumentItems BillingDocumentItem[]
+
+  @@index([productType])
+  @@index([productGroup])
+  @@map("products")
+}
+
+model ProductDescription {
+  product            String
+  language           String
+  productDescription String
+
+  productRef Product @relation(fields: [product], references: [product])
+
+  @@id([product, language])
+  @@index([language])
+  @@map("product_descriptions")
+}
+
+model ProductPlant {
+  product                    String
+  plant                      String
+  countryOfOrigin            String?
+  regionOfOrigin             String?
+  productionInvtryManagedLoc String?
+  availabilityCheckType      String?
+  fiscalYearVariant          String?
+  profitCenter               String?
+  mrpType                    String?
+
+  productRef Product @relation(fields: [product], references: [product])
+  plantRef   Plant   @relation(fields: [plant], references: [plant])
+
+  @@id([product, plant])
+  @@index([plant])
+  @@index([product])
+  @@map("product_plants")
+}
+
+model ProductStorageLocation {
+  product                        String
+  plant                          String
+  storageLocation                String
+  physicalInventoryBlockInd      String?
+  dateOfLastPostedCntUnRstrcdStk DateTime?
+
+  productRef Product @relation(fields: [product], references: [product])
+  plantRef   Plant   @relation(fields: [plant], references: [plant])
+
+  @@id([product, plant, storageLocation])
+  @@index([plant, storageLocation])
+  @@index([product, plant])
+  @@map("product_storage_locations")
+}
+
+model SalesOrderHeader {
+  salesOrder                  String   @id
+  salesOrderType              String
+  salesOrganization           String
+  distributionChannel         String
+  organizationDivision        String
+  salesGroup                  String?
+  salesOffice                 String?
+  soldToParty                 String
+  creationDate                DateTime
+  createdByUser               String
+  lastChangeDateTime          DateTime
+  totalNetAmount              Decimal
+  overallDeliveryStatus       String?
+  overallOrdReltdBillgStatus  String?
+  overallSdDocReferenceStatus String?
+  transactionCurrency         String
+  pricingDate                 DateTime
+  requestedDeliveryDate       DateTime
+  headerBillingBlockReason    String?
+  deliveryBlockReason         String?
+  incotermsClassification     String?
+  incotermsLocation1          String?
+  customerPaymentTerms        String?
+  totalCreditCheckStatus      String?
+
+  customer BusinessPartner  @relation("SalesOrderHeaderSoldToParty", fields: [soldToParty], references: [customer])
+  items    SalesOrderItem[]
+
+  @@index([soldToParty, creationDate])
+  @@index([salesOrganization, distributionChannel, organizationDivision])
+  @@map("sales_order_headers")
+}
+
+model SalesOrderItem {
+  salesOrder              String
+  salesOrderItem          String
+  salesOrderItemCategory  String
+  material                String
+  requestedQuantity       Decimal
+  requestedQuantityUnit   String
+  transactionCurrency     String
+  netAmount               Decimal
+  materialGroup           String?
+  productionPlant         String
+  storageLocation         String
+  salesDocumentRjcnReason String?
+  itemBillingBlockReason  String?
+
+  salesOrderHeader SalesOrderHeader @relation(fields: [salesOrder], references: [salesOrder])
+  product          Product          @relation(fields: [material], references: [product])
+  plantRef         Plant            @relation(fields: [productionPlant], references: [plant])
+
+  scheduleLines         SalesOrderScheduleLine[]
+  outboundDeliveryItems OutboundDeliveryItem[]   @relation("OutboundItemToSalesItem")
+
+  @@id([salesOrder, salesOrderItem])
+  @@index([material])
+  @@index([productionPlant, storageLocation])
+  @@map("sales_order_items")
+}
+
+model SalesOrderScheduleLine {
+  salesOrder                    String
+  salesOrderItem                String
+  scheduleLine                  String
+  confirmedDeliveryDate         DateTime?
+  orderQuantityUnit             String
+  confdOrderQtyByMatlAvailCheck Decimal
+
+  salesOrderItemRef SalesOrderItem @relation(fields: [salesOrder, salesOrderItem], references: [salesOrder, salesOrderItem])
+
+  @@id([salesOrder, salesOrderItem, scheduleLine])
+  @@index([confirmedDeliveryDate])
+  @@map("sales_order_schedule_lines")
+}
